@@ -502,7 +502,7 @@ async function drawChart(id) {
 }
 
 function chartSVG(rows, start, end) {
-  const W = 340, H = 170, L = 34, R = 34, T = 22, B = 22, w = W - L - R, h = H - T - B;
+  const W = 340, H = 186, L = 34, R = 34, T = 30, B = 32, w = W - L - R, h = H - T - B;
   const useHx = state.v === "hx";
   const y1v = rows.map(r => useHx ? humidex(r[1], r[2]) : r[1]);
   const y2v = rows.map(r => r[2]);
