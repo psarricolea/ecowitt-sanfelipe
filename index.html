@@ -129,7 +129,7 @@
     </div>
 
     <div class="foot">
-      Kriging ordinario con variograma lineal, sin pepita ni deriva (el método por defecto de Surfer); alternativa IDW (potencia 2). Distancias en metros. El área atenuada del mapa queda fuera de la red y es extrapolación.
+      Kriging ordinario con variograma lineal, sin pepita ni deriva (el método por defecto de Surfer); alternativa IDW (potencia 2). Distancias en metros. Fuera de la red de estaciones los valores son extrapolados.
       En “Ahora” se excluyen las estaciones sin datos en los últimos 30 min.
       Humidex según Environment Canada (Masterton &amp; Richardson, 1979), con punto de rocío de Magnus. Clases de confort: &lt;30 sin malestar; 30–39 algo de malestar; 40–45 gran malestar, evitar esfuerzo; 46–53 peligroso; ≥54 golpe de calor inminente. Con T &lt; 20 °C el humidex no se interpreta como malestar por calor.
     </div>
@@ -402,12 +402,6 @@ function render() {
       });
     });
 
-    // máscara: atenúa lo que queda fuera de la red (extrapolación), sin borde
-    if (hull) {
-      const hole = hull.geometry.coordinates[0].map(([x,y]) => [y,x]);
-      const outer = [[-89,-179],[-89,179],[89,179],[89,-179]];
-      L.polygon([outer, hole], { stroke: false, fillColor: theme.dark ? "#000" : "#fff", fillOpacity: 0.45, interactive: false }).addTo(layers.mask);
-    }
   }
 
   // estaciones
