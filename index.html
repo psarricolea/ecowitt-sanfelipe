@@ -51,6 +51,10 @@
   .st-label{background:#fff;border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 3px rgba(0,0,0,.12);padding:1px 5px;font-weight:700;font-size:12px;border-radius:4px;font-variant-numeric:tabular-nums}
   .st-label.stale{color:#9aa0a4;font-weight:500}
   .cls{font-size:11.5px;color:var(--muted);margin-left:14px}
+  .chart{margin-top:8px;min-height:40px}
+  .chart-msg{color:var(--muted);font-size:12px;padding:6px 0}
+  .chart-cap{color:var(--muted);font-size:11px;text-align:right;margin-top:-2px}
+  svg.ch{display:block;font:10.5px ui-sans-serif,system-ui,sans-serif;fill:#67727a}
   .foot{color:var(--muted);font-size:11.5px;margin-top:16px;line-height:1.5}
   @media (max-width:820px){
     .app{grid-template-columns:1fr;grid-template-rows:auto 60vh;height:auto}
@@ -412,8 +416,10 @@ function render() {
     mk.bindTooltip(has ? fmtVal(s.v, meta.dec) + (v==="t" ? "°" : v==="rh" ? "%" : "") : "s/d",
       { permanent: true, direction: "top", offset: [0,-8], className: "st-label" + (has ? "" : " stale") });
     const hx = humidex(s.t, s.rh);
-    mk.bindPopup(`<b>${s.name}</b><br>` + (s.ts ? `${lp(s.ts).date} ${hhmm(s.ts)}<br>` : "Sin datos<br>") +
-      `T: ${fmtVal(s.t,1)} °C · HR: ${fmtVal(s.rh,0)} %<br>Humidex: ${fmtVal(hx,1)} · ${hxLabel(hx, s.t)}` + (s.error ? `<br><span style="color:#b4541b">${s.error}</span>` : ""));
+    const head = `<b>${s.name}</b><br>` + (s.ts ? `${lp(s.ts).date} ${hhmm(s.ts)}<br>` : "Sin datos<br>") +
+      `T: ${fmtVal(s.t,1)} °C · HR: ${fmtVal(s.rh,0)} %<br>Humidex: ${fmtVal(hx,1)} · ${hxLabel(hx, s.t)}` + (s.error ? `<br><span style="color:#b4541b">${s.error}</span>` : "");
+    mk.bindPopup(`${head}<div class="chart" id="ch-${s.id}"><div class="chart-msg">Cargando últimas 24 h…</div></div>`, { maxWidth: 380, minWidth: 340 });
+    mk.on("popupopen", () => drawChart(s.id));
     mk.addTo(layers.pts);
     s._mk = mk;
   });
@@ -455,6 +461,91 @@ function render() {
     html += `<div class="note">Se necesitan ≥3 estaciones con datos para interpolar (hay ${good.length}).</div>`;
   }
   lg.innerHTML = html;
+}
+
+// ---------- gráfico de 24 h por estación ----------
+const dayCache = new Map();
+function getDay(date) {
+  const today = todayLocal();
+  const key = date + (date === today ? "@" + Math.floor(Date.now() / 300000) : "");  // hoy: se renueva cada 5 min
+  if (!dayCache.has(key)) dayCache.set(key, getJSON(`/day?date=${date}`).catch(e => { dayCache.delete(key); throw e; }));
+  return dayCache.get(key);
+}
+function shiftDay(d, n) { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+// instante (s) de la hora local `hour` del día `date` en America/Santiago
+function localTs(date, hour) {
+  const base = Date.parse(`${date}T${String(hour).padStart(2, "0")}:00:00Z`) / 1000;
+  for (const off of [3, 4, 2, 5]) { const ts = base + off * 3600; const p = lp(ts); if (p.date === date && p.hour === hour && p.minute === 0) return ts; }
+  return base + 3 * 3600;
+}
+// fin de la ventana: "Ahora" = ahora; hora fija = esa hora del día elegido; máx/mín = fin del día elegido
+function windowEnd() {
+  const nowS = Date.now() / 1000;
+  if (state.m === "now") return nowS;
+  if (state.m === "max" || state.m === "min") return Math.min(localTs(shiftDay(state.date, 1), 0), nowS);
+  return Math.min(localTs(state.date, +state.m), nowS);
+}
+
+async function drawChart(id) {
+  const box = document.getElementById("ch-" + id); if (!box) return;
+  const end = windowEnd(), start = end - 86400;
+  const dates = [...new Set([lp(start).date, lp(end).date])];
+  try {
+    const days = await Promise.all(dates.map(getDay));
+    const rows = days.flatMap(d => (d.stations.find(x => x.id === id) || { series: [] }).series)
+      .filter(([ts]) => ts >= start && ts <= end).sort((a, b) => a[0] - b[0]);
+    const el = document.getElementById("ch-" + id); if (!el) return;
+    el.innerHTML = rows.length < 2 ? `<div class="chart-msg">Sin datos en las 24 h previas.</div>` : chartSVG(rows, start, end);
+  } catch (e) {
+    const el = document.getElementById("ch-" + id); if (el) el.innerHTML = `<div class="chart-msg">No se pudo cargar la serie: ${e.message}</div>`;
+  }
+}
+
+function chartSVG(rows, start, end) {
+  const W = 340, H = 170, L = 34, R = 34, T = 22, B = 22, w = W - L - R, h = H - T - B;
+  const useHx = state.v === "hx";
+  const y1v = rows.map(r => useHx ? humidex(r[1], r[2]) : r[1]);
+  const y2v = rows.map(r => r[2]);
+  const ext = a => { const f = a.filter(x => x != null && isFinite(x)); let mn = Math.min(...f), mx = Math.max(...f); if (mx - mn < 2) { mn -= 1; mx += 1; } return [mn, mx]; };
+  const [a1, b1] = ext(y1v), [a2, b2] = ext(y2v);
+  const X = ts => L + (ts - start) / (end - start) * w;
+  const Y = (v, a, b) => T + h - (v - a) / (b - a) * h;
+  const path = (vals, a, b) => { let d = "", pen = false, prev = null;
+    rows.forEach((r, i) => { const v = vals[i]; if (v == null || !isFinite(v) || (prev != null && r[0] - prev > 1800)) pen = false;
+      if (v != null && isFinite(v)) { d += (pen ? "L" : "M") + X(r[0]).toFixed(1) + "," + Y(v, a, b).toFixed(1); pen = true; } prev = r[0]; });
+    return d; };
+  // marcas cada 6 h locales
+  let ticks = "";
+  for (let ts = Math.ceil(start / 3600) * 3600; ts <= end; ts += 3600) {
+    const p = lp(ts); if (p.hour % 6) continue;
+    const x = X(ts).toFixed(1);
+    ticks += `<line x1="${x}" x2="${x}" y1="${T}" y2="${T + h}" stroke="#e6e4de"/><text x="${x}" y="${H - 6}" text-anchor="middle">${String(p.hour).padStart(2, "0")}h</text>`;
+  }
+  // extremos de la variable principal
+  let iMx = -1, iMn = -1;
+  y1v.forEach((v, i) => { if (v == null) return; if (iMx < 0 || v > y1v[iMx]) iMx = i; if (iMn < 0 || v < y1v[iMn]) iMn = i; });
+  const c1 = useHx ? "#e6550d" : "#d73027", c2 = "#2c7fb8";
+  const n1 = useHx ? "Humidex" : "T (°C)";
+  const dot = (i, lab, dy) => `<circle cx="${X(rows[i][0]).toFixed(1)}" cy="${Y(y1v[i], a1, b1).toFixed(1)}" r="3" fill="${c1}"/>` +
+    `<text x="${Math.min(Math.max(X(rows[i][0]), L + 20), L + w - 20).toFixed(1)}" y="${(Y(y1v[i], a1, b1) + dy).toFixed(1)}" text-anchor="middle" fill="${c1}" font-weight="600">${lab}</text>`;
+  // bandas de confort detrás de la curva de humidex
+  let bands = "";
+  if (useHx) HX_CLASSES.forEach(c => { const lo = Math.max(c.min, a1), hi = Math.min(c.max, b1); if (hi <= lo) return;
+    bands += `<rect x="${L}" width="${w}" y="${Y(hi, a1, b1).toFixed(1)}" height="${(Y(lo, a1, b1) - Y(hi, a1, b1)).toFixed(1)}" fill="${c.color}" opacity="0.25"/>`; });
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="ch">
+    ${bands}${ticks}
+    <rect x="${L}" y="${T}" width="${w}" height="${h}" fill="none" stroke="#cfccc4"/>
+    <path d="${path(y2v, a2, b2)}" fill="none" stroke="${c2}" stroke-width="1.4" opacity="0.8"/>
+    <path d="${path(y1v, a1, b1)}" fill="none" stroke="${c1}" stroke-width="1.8"/>
+    ${iMx >= 0 ? dot(iMx, fmtVal(y1v[iMx], 1) + " · " + hhmm(rows[iMx][0]), -6) : ""}
+    ${iMn >= 0 && iMn !== iMx ? dot(iMn, fmtVal(y1v[iMn], 1) + " · " + hhmm(rows[iMn][0]), 13) : ""}
+    <text x="${L - 4}" y="${T + 4}" text-anchor="end" fill="${c1}">${Math.round(b1)}</text>
+    <text x="${L - 4}" y="${T + h}" text-anchor="end" fill="${c1}">${Math.round(a1)}</text>
+    <text x="${L + w + 4}" y="${T + 4}" fill="${c2}">${Math.round(b2)}</text>
+    <text x="${L + w + 4}" y="${T + h}" fill="${c2}">${Math.round(a2)}</text>
+    <text x="${L}" y="12" fill="${c1}" font-weight="600">${n1}</text>
+    <text x="${L + w}" y="12" text-anchor="end" fill="${c2}" font-weight="600">HR (%)</text>
+  </svg><div class="chart-cap">24 h hasta ${lp(end).date} ${hhmm(end)}</div>`;
 }
 
 function trimNum(x) { return String(+(+x).toFixed(2)); }
