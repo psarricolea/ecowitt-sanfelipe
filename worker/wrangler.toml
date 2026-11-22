@@ -1,0 +1,11 @@
+name = "ecowitt-sanfelipe"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Restrinja el acceso a su página una vez publicada, p. ej. "https://psarricolea.github.io"
+ALLOWED_ORIGIN = "https://psarricolea.github.io"
+
+# Secretos (NO se escriben aquí):
+#   npx wrangler secret put ECOWITT_APP_KEY
+#   npx wrangler secret put ECOWITT_API_KEY
