@@ -100,6 +100,7 @@
       </div>
       <div style="padding-top:18px">
         <label class="chk"><input type="checkbox" id="bands" checked> Bandas de color</label>
+        <label class="chk"><input type="checkbox" id="mzChk" checked> Manzanas censo 2024</label>
       </div>
     </div>
 
@@ -133,7 +134,7 @@
     </div>
 
     <div class="foot">
-      Kriging ordinario con variograma lineal, sin pepita ni deriva (el método por defecto de Surfer); alternativa IDW (potencia 2). Distancias en metros. Fuera de la red de estaciones los valores son extrapolados.
+      Kriging ordinario con variograma lineal, sin pepita ni deriva (el método por defecto de Surfer); alternativa IDW (potencia 2). Distancias en metros. La interpolación cubre el límite urbano (manzanas del Censo 2024, INE) más un buffer de 500 m; fuera de la red de estaciones los valores son extrapolados.
       En “Ahora” se excluyen las estaciones sin datos en los últimos 30 min.
       Humidex según Environment Canada (Masterton &amp; Richardson, 1979), con punto de rocío de Magnus. Clases de confort: &lt;30 sin malestar; 30–39 algo de malestar; 40–45 gran malestar, evitar esfuerzo; 46–53 peligroso; ≥54 golpe de calor inminente. Con T &lt; 20 °C el humidex no se interpreta como malestar por calor.
     </div>
@@ -272,6 +273,27 @@ function setBasemap(key) {
   state.b = key;
 }
 setBasemap(state.b);
+// ---------- área urbana: límite de manzanas censo 2024 y buffer de 500 m ----------
+const AREA = {"limite":{"type":"Polygon","coordinates":[[[-70.74047,-32.74269],[-70.74179,-32.74177],[-70.74202,-32.74151],[-70.74216,-32.74142],[-70.74235,-32.74136],[-70.74267,-32.74139],[-70.74235,-32.74074],[-70.74236,-32.74063],[-70.74316,-32.73983],[-70.74354,-32.73927],[-70.74373,-32.73908],[-70.74468,-32.7384],[-70.7449,-32.73812],[-70.74504,-32.73776],[-70.74526,-32.73743],[-70.74569,-32.73698],[-70.74508,-32.73707],[-70.74397,-32.73738],[-70.73967,-32.73897],[-70.73952,-32.7389],[-70.73934,-32.73841],[-70.73919,-32.73833],[-70.7392,-32.73792],[-70.73908,-32.73789],[-70.73903,-32.73779],[-70.73911,-32.73725],[-70.73922,-32.73719],[-70.73947,-32.7372],[-70.73954,-32.73657],[-70.73874,-32.73607],[-70.73839,-32.73614],[-70.73807,-32.73615],[-70.73681,-32.73604],[-70.73649,-32.73612],[-70.73629,-32.73622],[-70.73534,-32.73725],[-70.73496,-32.73772],[-70.73477,-32.73783],[-70.73432,-32.73794],[-70.7339,-32.73794],[-70.73346,-32.73781],[-70.73283,-32.73728],[-70.73264,-32.737],[-70.73239,-32.73686],[-70.73219,-32.73687],[-70.73174,-32.73705],[-70.73147,-32.73711],[-70.73066,-32.73719],[-70.73004,-32.73712],[-70.7293,-32.73676],[-70.72909,-32.73672],[-70.72825,-32.73693],[-70.72748,-32.73702],[-70.72714,-32.73711],[-70.72687,-32.73709],[-70.72594,-32.73659],[-70.72537,-32.73657],[-70.72467,-32.73638],[-70.72397,-32.73612],[-70.72379,-32.73612],[-70.7234,-32.73633],[-70.72326,-32.73627],[-70.72236,-32.73612],[-70.72228,-32.73606],[-70.72226,-32.73594],[-70.72302,-32.73431],[-70.72349,-32.73279],[-70.72275,-32.73279],[-70.72264,-32.73271],[-70.72264,-32.73257],[-70.71858,-32.73174],[-70.71813,-32.73332],[-70.71802,-32.73456],[-70.71793,-32.73465],[-70.71769,-32.73469],[-70.71801,-32.73642],[-70.71789,-32.73652],[-70.71709,-32.73663],[-70.71726,-32.73802],[-70.71691,-32.73848],[-70.71678,-32.73874],[-70.71664,-32.73877],[-70.7164,-32.73868],[-70.71516,-32.73846],[-70.71442,-32.73812],[-70.71403,-32.73829],[-70.71359,-32.7384],[-70.71302,-32.73844],[-70.7128,-32.73841],[-70.71222,-32.7381],[-70.71205,-32.73792],[-70.71187,-32.73782],[-70.7117,-32.73783],[-70.71154,-32.73789],[-70.71095,-32.73841],[-70.71068,-32.73855],[-70.71047,-32.73856],[-70.70972,-32.73844],[-70.70891,-32.73819],[-70.70849,-32.73814],[-70.70803,-32.73797],[-70.70756,-32.73807],[-70.70697,-32.73838],[-70.70666,-32.73849],[-70.70596,-32.73858],[-70.70575,-32.73851],[-70.70557,-32.73839],[-70.70509,-32.73789],[-70.70466,-32.73812],[-70.70482,-32.73844],[-70.70482,-32.73853],[-70.70394,-32.73926],[-70.70394,-32.73956],[-70.70389,-32.73964],[-70.70129,-32.74104],[-70.70258,-32.7426],[-70.70266,-32.74275],[-70.7026,-32.74286],[-70.6993,-32.74465],[-70.69916,-32.74461],[-70.6982,-32.74361],[-70.69675,-32.74459],[-70.69766,-32.74561],[-70.69768,-32.74571],[-70.69762,-32.74578],[-70.69464,-32.74768],[-70.69378,-32.74792],[-70.69361,-32.74829],[-70.69353,-32.74835],[-70.69339,-32.74835],[-70.6926,-32.74791],[-70.69201,-32.74765],[-70.69195,-32.74805],[-70.69185,-32.74812],[-70.69171,-32.74812],[-70.69155,-32.74845],[-70.69143,-32.74848],[-70.69106,-32.74841],[-70.69058,-32.74906],[-70.69105,-32.74928],[-70.69138,-32.74936],[-70.69152,-32.74947],[-70.69155,-32.74965],[-70.69151,-32.74978],[-70.69133,-32.74987],[-70.69111,-32.74987],[-70.69108,-32.74991],[-70.69152,-32.75106],[-70.69075,-32.75181],[-70.69085,-32.7519],[-70.69159,-32.75173],[-70.69197,-32.75133],[-70.69351,-32.75074],[-70.69361,-32.75074],[-70.69453,-32.7513],[-70.69519,-32.75149],[-70.69528,-32.75158],[-70.69526,-32.75168],[-70.6951,-32.75185],[-70.69425,-32.7526],[-70.69682,-32.75326],[-70.69754,-32.75108],[-70.6977,-32.75104],[-70.69908,-32.75136],[-70.69913,-32.75146],[-70.6992,-32.7545],[-70.69927,-32.75471],[-70.69929,-32.7559],[-70.69948,-32.75816],[-70.6994,-32.75827],[-70.69862,-32.75857],[-70.69864,-32.75884],[-70.70003,-32.7583],[-70.70139,-32.75765],[-70.70152,-32.75773],[-70.70205,-32.75908],[-70.70385,-32.75861],[-70.70369,-32.75815],[-70.70379,-32.75801],[-70.7073,-32.7571],[-70.70744,-32.75713],[-70.70751,-32.75724],[-70.70819,-32.75706],[-70.70818,-32.75693],[-70.70827,-32.75685],[-70.70847,-32.7568],[-70.70858,-32.75684],[-70.71055,-32.76252],[-70.71048,-32.76261],[-70.70998,-32.76287],[-70.70986,-32.76288],[-70.70838,-32.76351],[-70.70788,-32.76391],[-70.70749,-32.76432],[-70.70738,-32.76454],[-70.70644,-32.76502],[-70.70627,-32.76519],[-70.70609,-32.76525],[-70.70637,-32.76568],[-70.70671,-32.76654],[-70.71314,-32.7644],[-70.71256,-32.76249],[-70.71257,-32.7624],[-70.71265,-32.76233],[-70.71481,-32.7616],[-70.71492,-32.76161],[-70.71498,-32.76167],[-70.71602,-32.76345],[-70.72351,-32.76095],[-70.72362,-32.76102],[-70.72406,-32.76176],[-70.72408,-32.76194],[-70.72439,-32.76251],[-70.72432,-32.7629],[-70.72434,-32.76313],[-70.72486,-32.76312],[-70.72569,-32.7633],[-70.7269,-32.76348],[-70.72743,-32.7635],[-70.72853,-32.76338],[-70.72985,-32.763],[-70.73081,-32.76259],[-70.73148,-32.76217],[-70.73283,-32.76102],[-70.733,-32.76099],[-70.73371,-32.76024],[-70.73421,-32.75962],[-70.73747,-32.75504],[-70.73781,-32.75463],[-70.73849,-32.75393],[-70.74028,-32.75253],[-70.74108,-32.75173],[-70.74153,-32.75116],[-70.74113,-32.75141],[-70.74102,-32.75141],[-70.74094,-32.75134],[-70.73867,-32.74688],[-70.7387,-32.74679],[-70.73879,-32.74674],[-70.74064,-32.74644],[-70.73921,-32.7445],[-70.73933,-32.74427],[-70.73947,-32.74415],[-70.74041,-32.7429],[-70.74047,-32.74269]]]},"buffer":{"type":"Polygon","coordinates":[[[-70.7491,-32.74093],[-70.75042,-32.73906],[-70.7508,-32.73826],[-70.75102,-32.73697],[-70.75092,-32.7361],[-70.75062,-32.73527],[-70.74984,-32.73414],[-70.74912,-32.73352],[-70.74781,-32.73284],[-70.74632,-32.7325],[-70.74529,-32.73248],[-70.74417,-32.73262],[-70.74274,-32.73297],[-70.74104,-32.732],[-70.74008,-32.73171],[-70.73907,-32.73157],[-70.738,-32.73161],[-70.73681,-32.73153],[-70.73581,-32.73161],[-70.73454,-32.73192],[-70.7334,-32.73244],[-70.7322,-32.73236],[-70.73097,-32.73248],[-70.72961,-32.73224],[-70.72878,-32.73223],[-70.72855,-32.73137],[-70.72787,-32.73022],[-70.72721,-32.72956],[-70.72597,-32.7288],[-70.72388,-32.72818],[-70.71983,-32.72736],[-70.71827,-32.72724],[-70.71724,-32.72738],[-70.71626,-32.72769],[-70.71537,-32.72815],[-70.71427,-32.72909],[-70.71355,-32.73026],[-70.71284,-32.73283],[-70.7126,-32.73336],[-70.711,-32.73336],[-70.70965,-32.73367],[-70.70822,-32.73346],[-70.70673,-32.7336],[-70.70568,-32.7334],[-70.70464,-32.73339],[-70.70361,-32.73355],[-70.70264,-32.73388],[-70.70175,-32.73434],[-70.70092,-32.73491],[-70.70023,-32.7356],[-70.69965,-32.73658],[-70.69843,-32.73723],[-70.69759,-32.73779],[-70.6969,-32.73848],[-70.69633,-32.73938],[-70.69529,-32.73983],[-70.69303,-32.74135],[-70.69236,-32.74202],[-70.69169,-32.74316],[-70.69033,-32.74337],[-70.68935,-32.74374],[-70.68848,-32.74427],[-70.6872,-32.7453],[-70.68653,-32.74602],[-70.68579,-32.74706],[-70.68558,-32.74748],[-70.68531,-32.74836],[-70.68525,-32.74927],[-70.6853,-32.74973],[-70.68559,-32.75066],[-70.68541,-32.75169],[-70.68561,-32.75303],[-70.68599,-32.75386],[-70.68657,-32.75461],[-70.6874,-32.75534],[-70.68825,-32.75584],[-70.68969,-32.7563],[-70.69071,-32.75641],[-70.69135,-32.75639],[-70.69222,-32.75677],[-70.69357,-32.75714],[-70.69329,-32.75838],[-70.69331,-32.7591],[-70.69347,-32.75996],[-70.69383,-32.76079],[-70.69436,-32.76154],[-70.69546,-32.76246],[-70.69635,-32.76291],[-70.69732,-32.76321],[-70.69887,-32.76335],[-70.69993,-32.76322],[-70.70116,-32.76353],[-70.70084,-32.76445],[-70.70079,-32.76578],[-70.70101,-32.76664],[-70.70183,-32.76836],[-70.70233,-32.76911],[-70.70299,-32.76977],[-70.70378,-32.77031],[-70.70468,-32.77071],[-70.70616,-32.77103],[-70.70718,-32.77103],[-70.70818,-32.77087],[-70.7151,-32.76859],[-70.71644,-32.76794],[-70.71798,-32.76764],[-70.721,-32.76664],[-70.72182,-32.7671],[-70.72281,-32.76744],[-70.72597,-32.76792],[-70.72764,-32.76801],[-70.72973,-32.76777],[-70.73157,-32.76727],[-70.73363,-32.76642],[-70.73499,-32.76557],[-70.73682,-32.76413],[-70.73859,-32.7622],[-70.74208,-32.75734],[-70.74435,-32.75544],[-70.74515,-32.75465],[-70.74598,-32.75365],[-70.74665,-32.75243],[-70.74686,-32.7511],[-70.74674,-32.7502],[-70.74642,-32.74935],[-70.7459,-32.74857],[-70.74555,-32.7482],[-70.74585,-32.74743],[-70.74598,-32.74657],[-70.7459,-32.7457],[-70.74572,-32.74508],[-70.7465,-32.74453],[-70.74715,-32.74384],[-70.74763,-32.74306],[-70.74796,-32.74196],[-70.74848,-32.74156],[-70.7491,-32.74093]]]}};
+const AREA_F = turf.feature(AREA.buffer);
+map.createPane("mz"); map.getPane("mz").style.zIndex = 420;
+const limiteLayer = L.geoJSON(AREA.limite, { pane: "mz", interactive: false, style: { color: "#3b3f42", weight: 1.6, opacity: 0.9, fill: false } });
+let mzLayer = null;
+function decodeMz(rows) {   // [personas, hogares, [dx,dy,...] en 1e-5 grados]
+  return rows.map(([p, h, d]) => { let x = 0, y = 0; const ring = [];
+    for (let i = 0; i < d.length; i += 2) { x += d[i]; y += d[i+1]; ring.push([y / 1e5, x / 1e5]); }
+    return L.polygon(ring, { pane: "mz", color: "#5a6064", weight: 0.5, opacity: 0.55, fillColor: "#ffffff", fillOpacity: 0.01 })
+      .bindTooltip(`Manzana censo 2024<br>${p ?? "—"} personas · ${h ?? "—"} hogares`, { sticky: true }); });
+}
+async function showManzanas(on) {
+  if (on && !mzLayer) {
+    try { const r = await fetch("mz.json"); mzLayer = L.layerGroup(decodeMz(await r.json())); }
+    catch (e) { console.warn("manzanas", e); return; }
+  }
+  if (mzLayer) on ? mzLayer.addTo(map) : map.removeLayer(mzLayer);
+}
+limiteLayer.addTo(map); showManzanas(true);
+
 const layers = { bands: L.layerGroup().addTo(map), lines: L.layerGroup().addTo(map), mask: L.layerGroup().addTo(map), pts: L.layerGroup().addTo(map) };
 let fitted = false;
 
@@ -341,21 +363,15 @@ function render() {
   const good = snap.filter(s => s.v != null);
   Object.values(layers).forEach(l => l.clearLayers());
 
-  // Marco del mapa
-  const all = snap.length ? snap : [];
-  if (!fitted && all.length) {
-    map.fitBounds(L.latLngBounds(all.map(s => [s.lat, s.lon])).pad(0.25)); fitted = true;
-  }
+  // Marco del mapa: área urbana (manzanas censo 2024) + 500 m
+  if (!fitted) { map.fitBounds(L.geoJSON(AREA.buffer).getBounds()); fitted = true; }
 
   const theme = BASEMAPS[state.b];
   let breaks = [], step = null, lo = null, hi = null;
   const colorFor = x => x == null ? "#c9cdd0" : v === "hx" ? hxClass(x).color : rampColor(meta.ramp, (x - lo) / (hi - lo));
   if (good.length >= 3) {
-    // grilla
-    const lats = all.map(s=>s.lat), lons = all.map(s=>s.lon);
-    const padLat = Math.max((Math.max(...lats)-Math.min(...lats))*0.2, 0.004);
-    const padLon = Math.max((Math.max(...lons)-Math.min(...lons))*0.2, 0.004);
-    const bbox = [Math.min(...lons)-padLon, Math.min(...lats)-padLat, Math.max(...lons)+padLon, Math.max(...lats)+padLat];
+    // grilla sobre el área de interpolación (límite urbano + 500 m)
+    const bbox = turf.bbox(AREA_F);
     const spanKm = turf.distance([bbox[0],bbox[1]],[bbox[2],bbox[3]]);
     const cell = Math.max(spanKm/CONFIG.GRID_N, 0.03);
     const grid = turf.pointGrid(bbox, cell, { units: "kilometers" });
@@ -363,11 +379,8 @@ function render() {
     const est = kr || ((la, lo_) => idw(good, la, lo_, CONFIG.IDW_POWER));
     grid.features.forEach(f => { const [x,y] = f.geometry.coordinates; f.properties.v = est(y, x); });
 
-    // envolvente de las estaciones (+350 m): define el rango de colores y la zona atenuada
-    const fc = turf.featureCollection(good.map(s => turf.point([s.lon, s.lat])));
-    let hull = turf.convex(fc);
-    if (hull) hull = turf.buffer(hull, 0.35, { units: "kilometers" });
-    const inside = hull ? grid.features.filter(f => turf.booleanPointInPolygon(f, hull)).map(f => f.properties.v) : [];
+    // rango de colores: estaciones + celdas dentro del área
+    const inside = grid.features.filter(f => turf.booleanPointInPolygon(f, AREA_F)).map(f => f.properties.v);
     const vals = [...good.map(s => s.v), ...inside];
     const mn = Math.min(...vals), mx = Math.max(...vals);
     step = niceStep(mx - mn, v);
@@ -380,7 +393,13 @@ function render() {
 
     if (document.getElementById("bands").checked) {
       const bands = turf.isobands(grid, breaks, { zProperty: "v" });
-      L.geoJSON(bands, {
+      const clipped = [];
+      bands.features.forEach(f => {
+        if (!f.geometry || !f.geometry.coordinates.length) return;
+        let c = null; try { c = turf.intersect(f, AREA_F); } catch (e) { c = null; }
+        if (c) { c.properties = f.properties; clipped.push(c); }
+      });
+      L.geoJSON(turf.featureCollection(clipped), {
         style: f => {
           const [a, b] = String(f.properties.v).split(/(?<=\d)-/).map(parseFloat);
           return { stroke: false, fillColor: colorFor((a + b) / 2), fillOpacity: theme.bandOp };
@@ -389,23 +408,24 @@ function render() {
       }).addTo(layers.bands);
     }
 
+    // isolíneas recortadas al área: se conservan los tramos con vértices dentro
     const lines = turf.isolines(grid, breaks, { zProperty: "v" });
     const lineCol = theme.dark ? "#f2f2f2" : "#2b2b2b";
-    L.geoJSON(lines, {
-      style: f => ({ color: lineCol, weight: v === "hx" && [30,40,46,54].includes(+f.properties.v) ? 2.2 : 1, opacity: 0.8 }),
-      interactive: false,
-    }).addTo(layers.lines);
-    // etiquetas de isolíneas
+    const clipLine = coords => { const runs = []; let cur = [];
+      coords.forEach(pt => { if (turf.booleanPointInPolygon(pt, AREA_F)) cur.push(pt); else { if (cur.length > 1) runs.push(cur); cur = []; } });
+      if (cur.length > 1) runs.push(cur); return runs; };
     lines.features.forEach(f => {
       const val = f.properties.v;
-      const parts = f.geometry.type === "MultiLineString" ? f.geometry.coordinates : [f.geometry.coordinates];
-      parts.filter(c => c.length >= 8).slice(0, 2).forEach(c => {
+      const parts = (f.geometry.type === "MultiLineString" ? f.geometry.coordinates : [f.geometry.coordinates]).flatMap(clipLine);
+      if (!parts.length) return;
+      const bold = v === "hx" && [30,40,46,54].includes(+val);
+      L.polyline(parts.map(c => c.map(([x,y]) => [y,x])), { color: lineCol, weight: bold ? 2.2 : 1, opacity: 0.8, interactive: false }).addTo(layers.lines);
+      parts.filter(c => c.length >= 8).sort((a, b) => b.length - a.length).slice(0, 2).forEach(c => {
         const [x,y] = c[Math.floor(c.length/2)];
         L.tooltip({ permanent: true, direction: "center", className: "iso-label", interactive: false })
           .setLatLng([y,x]).setContent(trimNum(val)).addTo(layers.lines);
       });
     });
-
   }
 
   // estaciones
@@ -597,6 +617,7 @@ document.getElementById("momSeg").addEventListener("click", e => {
 });
 dateEl.addEventListener("change", () => { state.date = dateEl.value; if (state.m !== "now") load(); });
 document.getElementById("bands").addEventListener("change", render);
+document.getElementById("mzChk").addEventListener("change", e => showManzanas(e.target.checked));
 document.getElementById("metSeg").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   document.querySelectorAll("#metSeg button").forEach(x => x.classList.toggle("on", x===b));
