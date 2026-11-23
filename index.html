@@ -292,13 +292,15 @@ const AREA_F = turf.feature(AREA.buffer);
 map.createPane("mz"); map.getPane("mz").style.zIndex = 420;
 const limiteLayer = L.geoJSON(AREA.limite, { pane: "mz", interactive: false, style: { color: "#3b3f42", weight: 1.6, opacity: 0.9, fill: false } });
 let mzLayer = null, MZ = null, mzOn = true;
+// Manzanas con varias partes: fracción del área de la manzana en cada parte (reparte la población sin duplicarla)
+const MZW = {"101":0.1658,"102":0.8342,"120":0.5573,"121":0.4427,"136":0.1156,"137":0.8844,"138":0.0465,"139":0.9535,"140":0.4345,"141":0.5655,"198":0.3351,"199":0.6649,"200":0.3271,"201":0.6729,"259":0.6739,"260":0.3261,"261":0.2342,"262":0.7658,"317":0.4887,"318":0.5113,"319":0.2696,"320":0.7304,"321":0.169,"322":0.831,"445":0.4994,"446":0.5006,"478":0.655,"479":0.345,"480":0.2125,"481":0.7875,"482":0.3409,"483":0.6591,"601":0.1203,"602":0.8797,"603":0.507,"604":0.493,"638":0.672,"639":0.328,"669":0.386,"670":0.614,"749":0.0991,"750":0.9009,"821":0.0681,"822":0.9319,"823":0.5583,"824":0.4417,"992":0.2214,"993":0.7786,"994":0.5887,"995":0.4113}, N_MZ = 986;
 function decodeMz(rows) {   // [personas, hogares, [dx,dy,...] en 1e-5 grados]
-  return rows.map(([p, h, d]) => { let x = 0, y = 0, sx = 0, sy = 0; const ring = [];
+  return rows.map(([p, h, d], idx) => { const w = MZW[idx] ?? 1; let x = 0, y = 0, sx = 0, sy = 0; const ring = [];
     for (let i = 0; i < d.length; i += 2) { x += d[i]; y += d[i+1]; ring.push([y / 1e5, x / 1e5]); sx += x; sy += y; }
     const n = ring.length || 1;
     const poly = L.polygon(ring, { pane: "mz", color: "#5a6064", weight: 0.5, opacity: 0.55, fillColor: "#ffffff", fillOpacity: 0.01 })
       .bindTooltip(`Manzana censo 2024<br>${p ?? "—"} personas · ${h ?? "—"} hogares`, { sticky: true });
-    return { p: p || 0, h: h || 0, lat: sy / n / 1e5, lon: sx / n / 1e5, poly };
+    return { p: p || 0, h: h || 0, w, lat: sy / n / 1e5, lon: sx / n / 1e5, poly };
   });
 }
 async function loadMz() {
@@ -602,7 +604,7 @@ function exposureCalc(est, breaks, colorFor, v, meta) {
       (v === "hx" ? ` · ${hxClass(x).label}` : ""));
     const bi = bins.findIndex(bn => x >= bn.a && x < bn.b);
     const bn = bins[bi >= 0 ? bi : (x < bins[0].a ? 0 : bins.length - 1)];
-    bn.p += m.p; bn.n++; tot += m.p; wsum += m.p * x;
+    const pw = m.p * m.w; bn.p += pw; bn.n++; tot += pw; wsum += pw * x;
   });
   return { bins, tot, mean: tot ? wsum / tot : null, unit };
 }
@@ -611,7 +613,7 @@ function renderExposure(ex, v, meta) {
   if (!ex) { box.hidden = true; return; }
   box.hidden = false;
   if (ex === "loading") { el.innerHTML = `<div class="ex-note">Cargando manzanas…</div>`; return; }
-  const fmtN = n => n.toLocaleString("es-CL");
+  const fmtN = n => Math.round(n).toLocaleString("es-CL");
   const pct = n => ex.tot ? (100 * n / ex.tot) : 0;
   let sum;
   if (v === "hx") {
@@ -625,10 +627,10 @@ function renderExposure(ex, v, meta) {
   }
   const max = Math.max(...ex.bins.map(b => b.p), 1);
   const rows = [...ex.bins].reverse().filter(b => v === "hx" || b.p > 0).map(b =>
-    `<div class="ex-r" title="${b.n} manzanas"><span class="sw" style="background:${b.color}"></span>` +
+    `<div class="ex-r" title="${b.n} polígonos de manzana"><span class="sw" style="background:${b.color}"></span>` +
     `<div class="bar"><i style="width:${(100 * b.p / max).toFixed(1)}%;background:${b.color}"></i><span>${b.label}</span></div>` +
     `<span class="n">${fmtN(b.p)} · ${pct(b.p).toFixed(0)} %</span></div>`).join("");
-  el.innerHTML = `<div class="ex-sum">${sum}</div>${rows}<div class="ex-note">${fmtN(ex.tot)} personas en ${MZ.length.toLocaleString("es-CL")} polígonos de manzana. Cada manzana toma el valor interpolado en su centroide.</div>`;
+  el.innerHTML = `<div class="ex-sum">${sum}</div>${rows}<div class="ex-note">${fmtN(ex.tot)} personas en ${N_MZ} manzanas. Cada manzana toma el valor interpolado en su centroide; las manzanas de varias partes reparten su población según el área.</div>`;
 }
 
 function trimNum(x) { return String(+(+x).toFixed(2)); }
