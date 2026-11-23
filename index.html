@@ -67,10 +67,12 @@
   .logo{display:block;width:100%;height:auto;margin:0 0 6px}
   .credits{border-bottom:1px solid var(--line);margin-bottom:14px;padding-bottom:10px;font-size:12px;color:var(--ink);line-height:1.6}
   .credits b{font-weight:600;color:var(--muted)}
-  .ref-ic{width:16px;height:16px;border:2px solid #fff;border-radius:3px;transform:rotate(45deg);box-shadow:0 0 0 1px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.3)}
+  .ref-ic{width:24px;height:24px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+  .ref-ic svg{width:14px;height:14px;display:block}
   .ref-key{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin:6px 0 0}
   .ref-key span{display:inline-flex;align-items:center;gap:5px}
-  .ref-key i{display:inline-block;width:9px;height:9px;transform:rotate(45deg);border-radius:1px}
+  .ref-key i{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+  .ref-key i svg{width:10px;height:10px}
   .ref-pop td{padding:2px 6px 2px 0;border:none;font-size:12.5px}
   .ref-pop td:first-child{color:var(--muted);white-space:nowrap}
   select{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:#fff;color:var(--ink)}
@@ -147,9 +149,9 @@
     </div>
 
     <div class="ref-key" id="refKey">
-      <span><i style="background:#1f6fb4"></i>Interior climatizado</span>
-      <span><i style="background:#7b5ea7"></i>Interior sin aire acond.</span>
-      <span><i style="background:#2e8b57"></i>Espacio abierto / deportivo</span>
+      <span><i style="background:#1f6fb4"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M10 4a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 9v7"/></svg></i>Interior climatizado</span>
+      <span><i style="background:#7b5ea7"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M10 4a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 9v7"/></svg></i>Interior sin aire acond.</span>
+      <span><i style="background:#2e8b57"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M10 4a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 9v7"/></svg></i>Espacio abierto / deportivo</span>
     </div>
 
     <div class="grp">
@@ -384,6 +386,7 @@ function showManzanas(on) { mzOn = on; if (mzLayer) on ? mzLayer.addTo(map) : ma
 limiteLayer.addTo(map); loadMz();
 
 // ---------- refugios climáticos potenciales (catastros Espacios Culturales y Socioculturales, comuna de San Felipe) ----------
+const REF_THERMO = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M10 4a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 9v7"/></svg>';
 const REF_TIPOS = {
   clima:   { col: "#1f6fb4", txt: "Interior climatizado" },
   interior:{ col: "#7b5ea7", txt: "Interior sin aire acondicionado" },
@@ -405,9 +408,6 @@ const REFUGIOS = [
   { n: "Centro de Artes y Oficios Almendral", dir: "El Almendral 3627", lat: -32.749888, lon: -70.692692, tipo: "interior",
     uso: "Educación artística y oficios", hor: "11:00–14:00 y 16:00–17:00", ac: "No", cal: "No",
     esp: "12 espacios, más de 1000 m²; anfiteatro y espacio exterior", fuente: "Espacios Culturales" },
-  { n: "Escuela República Argentina (Escuela Artística El Tambo)", dir: "Tocornal s/n, El Tambo", lat: -32.764330, lon: -70.682590, tipo: "interior",
-    uso: "Educación artística", hor: "L–V diurno", ac: "No", cal: "No",
-    esp: "Patio central (200 personas)", fuente: "Espacios Culturales", fuera: true },
   { n: "Estadio Municipal Javier Muñoz Delgado", dir: "Av. Maipú 117", lat: -32.748104, lon: -70.729613, tipo: "abierto",
     uso: "Deporte", hor: "L–V 8:00–13:30 y 14:30–17:45", ac: "No aplica", cal: "No aplica",
     esp: "Más de 1000 m²; baños accesibles, ruta accesible, transporte público a ≤2 cuadras", fuente: "Espacios Socioculturales" },
@@ -415,10 +415,10 @@ const REFUGIOS = [
 map.createPane("refugios"); map.getPane("refugios").style.zIndex = 610;
 const refLayer = L.layerGroup(REFUGIOS.map(r => {
   const t = REF_TIPOS[r.tipo];
-  const ic = L.divIcon({ className: "", html: `<div class="ref-ic" style="background:${t.col}"></div>`, iconSize: [16,16], iconAnchor: [8,8], popupAnchor: [0,-10] });
+  const ic = L.divIcon({ className: "", html: `<div class="ref-ic" style="background:${t.col}">${REF_THERMO}</div>`, iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-14] });
   const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
   return L.marker([r.lat, r.lon], { icon: ic, pane: "refugios", title: r.n })
-    .bindTooltip(r.n, { direction: "top", offset: [0,-10] })
+    .bindTooltip(r.n, { direction: "top", offset: [0,-14] })
     .bindPopup(`<b>${r.n}</b><br><span style="color:${t.col};font-weight:600">Refugio potencial · ${t.txt}</span>
       <table class="ref-pop">${row("Dirección", r.dir)}${row("Uso", r.uso)}${row("Horario", r.hor)}${row("Aire acond.", r.ac)}${row("Calefacción", r.cal)}${row("Espacios", r.esp)}${row("Fuente", r.fuente)}</table>` +
       (r.fuera ? `<div style="color:#b4541b;font-size:11.5px;margin-top:4px">Fuera del área urbana interpolada.</div>` : "") +
